@@ -1,26 +1,6 @@
-/* .prod-ribbon {
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: red;
-  color: white;
-  font-size: 16px;
-  text-align: center;
-  padding: 5px;
-  z-index: 9999;
-  font-weight: bold;
-} */
-
-#crx-root {
+#app-env-tag-crx-root {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 9999;
 }
-
-/* #crx-root {
-  position: fixed;
-  top: 3rem;
-  left: 50%;
-  transform: translate(-50%, 0);
-} */

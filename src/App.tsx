@@ -1,34 +1,77 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+// import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
+import SettingForm from "@/modules/setting-form/SettingForm";
+import { getByDomain, SiteSetting } from "@/services/setting.service";
+import { getCurrentTab } from "@/services/tab.service";
+import CreateSetting from "@/modules/create-setting/CreateSetting";
+import { extractDomain } from "@/utils/url.utils";
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [domain, setDomain] = useState<string | null>(null);
+  const [currentSetting, setCurrentSetting] = useState<SiteSetting | null>(
+    null
+  );
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchInitData();
+  }, []);
+
+  async function fetchInitData() {
+    setLoading(true);
+    setDomain(null);
+    setCurrentSetting(null);
+
+    try {
+      const currentTab = await getCurrentTab();
+      const url = currentTab.url!;
+
+      const domain = extractDomain(url);
+      setDomain(domain);
+
+      const currentSetting = await getByDomain(domain);
+      if (currentSetting) {
+        setCurrentSetting(currentSetting);
+      }
+    } catch (err) {
+      setError("Failed to get current tab");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  if (!domain) {
+    return <div>No active tab found.</div>;
+  }
+
+  if (!currentSetting) {
+    return (
+      <CreateSetting
+        domain={domain}
+        onRefreshSetting={fetchInitData}
+      ></CreateSetting>
+    );
+  }
 
   return (
     <>
-      <p className="bg-amber-500 text-black">Test</p>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <p>{domain}</p>
+      <SettingForm
+        domain={domain}
+        setting={currentSetting}
+        onRefreshSetting={fetchInitData}
+      ></SettingForm>
     </>
   );
 }

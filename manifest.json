@@ -4,13 +4,13 @@
   "version": "1.0",
   "manifest_version": 3,
   "action": {
-    "default_popup": "index.html",
-    "default_icon": "hello_extensions.png"
+    "default_popup": "index.html"
   },
   "content_scripts": [
     {
       "js": ["src/scripts/content.jsx"],
-      "matches": ["https://www.google.com/*"]
+      "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "permissions": ["storage", "tabs"]
 }
