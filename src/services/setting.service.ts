@@ -7,11 +7,28 @@ export interface SiteSetting {
   enable: boolean;
 }
 
+export enum Position {
+  LT = "LT",
+  RT = "RT",
+  LB = "LB",
+  RB = "RB",
+}
+
 export interface Tag {
   label: string;
   backgroundColor: string;
   foregroundColor: string;
+  margin: number;
+  position: Position;
 }
+
+export const DEFAULT_TAG: Tag = {
+  label: "tag",
+  backgroundColor: "#000000",
+  foregroundColor: "#ffffff",
+  margin: 5,
+  position: Position.LT,
+};
 
 const storage = chrome.storage.local;
 

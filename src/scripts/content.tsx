@@ -11,7 +11,7 @@ async function getSiteSetting(): Promise<SiteSetting | undefined> {
 }
 
 function renderTag(setting: SiteSetting): void {
-  const { label, backgroundColor, foregroundColor } = setting.tag;
+  const { label, backgroundColor, foregroundColor, margin } = setting.tag;
   const root = document.createElement("div");
   root.id = "app-env-tag-crx-root";
   document.body.appendChild(root);
@@ -22,6 +22,7 @@ function renderTag(setting: SiteSetting): void {
         label={label}
         backgroundColor={backgroundColor}
         foregroundColor={foregroundColor}
+        margin={margin}
       ></Tag>
     </React.StrictMode>
   );

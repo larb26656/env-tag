@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { save } from "@/services/setting.service";
-import { useState } from "react";
+import { useLoader } from "@/providers/loader.provider";
+import { DEFAULT_TAG, save } from "@/services/setting.service";
+import { toast } from "sonner";
 
 interface CreateSettingProps {
   domain: string;
@@ -11,35 +12,22 @@ export default function CreateSetting({
   domain,
   onRefreshSetting: onSettingCreated,
 }: CreateSettingProps) {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const loader = useLoader();
 
   async function handleCreate() {
-    setLoading(true);
+    loader.startLoading();
     try {
       await save(domain, {
         enable: true,
-        tag: {
-          label: "tag",
-          backgroundColor: "#000000",
-          foregroundColor: "#ffffff",
-        },
+        tag: DEFAULT_TAG,
       });
       onSettingCreated();
     } catch (err) {
-      setError("Failed to create setting");
+      toast("Failed to create setting");
       console.error(err);
     } finally {
-      setLoading(false);
+      loader.stopLoading();
     }
-  }
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
   }
 
   return (
