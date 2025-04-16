@@ -1,14 +1,5 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import Tag from "@/components/tag/Tag";
@@ -21,9 +12,19 @@ import {
 import { useLoader } from "@/providers/loader.provider";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import classNames from "classnames";
-import { RadioGroup } from "@radix-ui/react-radio-group";
-import { RadioGroupItem } from "@/components/ui/radio-group";
+import { useForm, useWatch } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import RenderTagFrame from "@/components/tag/RenderTagFrame";
 
 interface SettingFormProps {
   domain: string;
@@ -31,29 +32,63 @@ interface SettingFormProps {
   onRefreshSetting: () => void;
 }
 
+interface SettingForm {
+  label: string;
+  backgroundColor: string;
+  foregroundColor: string;
+  margin: number;
+  position: Position;
+}
+
+const formSchema = z.object({
+  enabled: z.boolean(),
+  label: z.string().nonempty(),
+  backgroundColor: z.string().nonempty(),
+  foregroundColor: z.string().nonempty(),
+  margin: z.number(),
+  position: z.nativeEnum(Position),
+});
+
+type FromSchema = z.infer<typeof formSchema>;
+
 export default function SettingForm({
   domain,
   setting,
   onRefreshSetting,
 }: SettingFormProps) {
-  const [enabled, setEnabled] = useState(setting.enable);
-  const [label, setLabel] = useState(setting.tag.label);
-  const [backgroundColor, setBackgroundColor] = useState(
-    setting.tag.backgroundColor
-  );
-  const [foregroundColor, setForegroundColor] = useState(
-    setting.tag.foregroundColor
-  );
-  const [margin, setMargin] = useState(setting.tag.margin);
-  const [position, setPosition] = useState(setting.tag.position);
+  const {
+    enabled,
+    tag: { label, backgroundColor, foregroundColor, margin, position },
+  } = setting;
+
+  const form = useForm<FromSchema>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      enabled: enabled,
+      label: label,
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor,
+      margin: margin,
+      position: position,
+    },
+  });
 
   const loader = useLoader();
 
-  async function handleSave() {
+  async function handleSubmit(data: FromSchema) {
+    const {
+      enabled,
+      label,
+      backgroundColor,
+      foregroundColor,
+      margin,
+      position,
+    } = data;
+
     loader.startLoading();
     try {
       await save(domain, {
-        enable: enabled,
+        enabled: enabled,
         tag: {
           label: label,
           backgroundColor: backgroundColor,
@@ -83,139 +118,215 @@ export default function SettingForm({
     }
   }
 
-  return (
-    <Card className="w-80 shadow-none border-0">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="enable-toggle" className="font-medium">
-            Enable
-          </Label>
-          <Switch
-            id="enable-toggle"
-            checked={enabled}
-            onCheckedChange={setEnabled}
-          />
-        </div>
+  function EnabledField() {
+    return (
+      <FormField
+        control={form.control}
+        name="enabled"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Enable</FormLabel>
+            <FormControl>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                disabled={field.disabled}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
-        <div className="space-y-2">
-          <Label htmlFor="label" className="font-medium">
-            Label
-          </Label>
-          <Input
-            id="label"
-            placeholder="Enter label"
-            value={margin}
-            onChange={(e) => setLabel(e.target.value)}
-          />
-        </div>
+  function LabelField() {
+    return (
+      <FormField
+        control={form.control}
+        name="label"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Label</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
-        <div className="space-y-2">
-          <Label htmlFor="color-picker" className="font-medium">
-            Background color
-          </Label>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-full border"
-              style={{ backgroundColor: backgroundColor }}
-            />
-            <input
-              id="color-picker"
-              type="color"
-              value={backgroundColor}
-              onChange={(e) => setBackgroundColor(e.target.value)}
-              className="w-full h-9 cursor-pointer"
-            />
-          </div>
-        </div>
+  function BackgroundColorField() {
+    return (
+      <FormField
+        control={form.control}
+        name="backgroundColor"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Background color</FormLabel>
+            <FormControl>
+              <div className="flex items-center gap-3">
+                <input type="color" {...field} />
+                <div
+                  className="w-8 h-8 rounded-full border"
+                  style={{ backgroundColor: field.value }}
+                />
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
-        <div className="space-y-2">
-          <Label htmlFor="color-picker" className="font-medium">
-            Foreground color
-          </Label>
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-full border"
-              style={{ backgroundColor: foregroundColor }}
-            />
-            <input
-              id="color-picker"
-              type="color"
-              value={foregroundColor}
-              onChange={(e) => setForegroundColor(e.target.value)}
-              className="w-full h-9 cursor-pointer"
-            />
-          </div>
-        </div>
+  function ForegroundColorField() {
+    return (
+      <FormField
+        control={form.control}
+        name="foregroundColor"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Foreground color</FormLabel>
+            <FormControl>
+              <div className="flex items-center gap-3">
+                <input type="color" {...field} />
+                <div
+                  className="w-8 h-8 rounded-full border"
+                  style={{ backgroundColor: field.value }}
+                />
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
-        <div className="space-y-2">
-          <Label htmlFor="margin" className="font-medium">
-            Margin
-          </Label>
-          <Input
-            id="margin"
-            placeholder="Enter margin"
-            value={margin}
-            onChange={(e) => setMargin(Number(e.target.value))}
-          />
-        </div>
+  function MarginField() {
+    return (
+      <FormField
+        control={form.control}
+        name="margin"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Margin</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                {...field}
+                value={field.value ?? ""}
+                onChange={(e) => field.onChange(e.target.valueAsNumber)}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
-        <div className="space-y-2">
-          <Label className="font-medium">Position</Label>
-          <RadioGroup
-            defaultValue={position}
-            onValueChange={(value) => setPosition(value as Position)}
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value={Position.LT} id="position-lt" />
-              <Label htmlFor="position-lt">Left Top (LT)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value={Position.RT} id="position-rt" />
-              <Label htmlFor="position-rt">Right Top (RT)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value={Position.LB} id="position-lb" />
-              <Label htmlFor="position-lb">Left Bottom (LB)</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value={Position.RB} id="position-rb" />
-              <Label htmlFor="position-rb">Right Bottom (RB)</Label>
-            </div>
-          </RadioGroup>
-        </div>
+  function PositionField() {
+    return (
+      <FormField
+        control={form.control}
+        name="position"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Position</FormLabel>
+            <FormControl>
+              <RadioGroup
+                value={field.value}
+                onValueChange={field.onChange}
+                className="flex flex-col space-y-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={Position.LT} id="position-lt" />
+                  <Label htmlFor="position-lt">Left Top (LT)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={Position.RT} id="position-rt" />
+                  <Label htmlFor="position-rt">Right Top (RT)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={Position.LB} id="position-lb" />
+                  <Label htmlFor="position-lb">Left Bottom (LB)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value={Position.RB} id="position-rb" />
+                  <Label htmlFor="position-rb">Right Bottom (RB)</Label>
+                </div>
+              </RadioGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
 
-        <div className="space-y-2">
-          <Label htmlFor="color-picker" className="font-medium">
-            Preview
-          </Label>
-          <div className="flex items-center bg-secondary gap-3">
+  function Display() {
+    const values = useWatch({
+      control: form.control,
+      name: [
+        "label",
+        "backgroundColor",
+        "foregroundColor",
+        "margin",
+        "position",
+      ],
+    });
+
+    const [label, backgroundColor, foregroundColor, margin, position] = values;
+
+    return (
+      <>
+        <Label htmlFor="color-picker" className="font-medium">
+          Preview
+        </Label>
+        <div className="flex items-center bg-secondary gap-3 relative w-[200px] h-[200px]">
+          <RenderTagFrame isHaveParent={true} position={position}>
             <Tag
               label={label}
               backgroundColor={backgroundColor}
               foregroundColor={foregroundColor}
               margin={margin}
             ></Tag>
-          </div>
+          </RenderTagFrame>
         </div>
-      </CardContent>
+      </>
+    );
+  }
 
-      <CardFooter className="flex justify-between pt-2">
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleDelete}
-          className="px-3"
-        >
+  function Footer() {
+    return (
+      <div className="flex justify-center gap-2">
+        <Button variant="destructive" size="sm" onClick={handleDelete}>
           <Trash2 className="h-4 w-4 mr-1" />
           Delete
         </Button>
-        <Button onClick={handleSave} size="sm">
+        <Button type="submit" size="sm">
           Save
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    );
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <EnabledField />
+        <LabelField />
+        <BackgroundColorField />
+        <ForegroundColorField />
+        <MarginField />
+        <Display />
+        <PositionField />
+        <Footer />
+      </form>
+    </Form>
   );
 }

@@ -4,7 +4,7 @@ export type Setting = Record<string, SiteSetting>;
 
 export interface SiteSetting {
   tag: Tag;
-  enable: boolean;
+  enabled: boolean;
 }
 
 export enum Position {

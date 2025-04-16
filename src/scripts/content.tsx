@@ -4,6 +4,7 @@ import "./content.css";
 import Tag from "@/components/tag/Tag";
 import { getByDomain, SiteSetting } from "@/services/setting.service";
 import { getCurrentDomain } from "@/utils/url.utils";
+import RenderTagFrame from "@/components/tag/RenderTagFrame";
 
 async function getSiteSetting(): Promise<SiteSetting | undefined> {
   const domain = getCurrentDomain();
@@ -11,19 +12,23 @@ async function getSiteSetting(): Promise<SiteSetting | undefined> {
 }
 
 function renderTag(setting: SiteSetting): void {
-  const { label, backgroundColor, foregroundColor, margin } = setting.tag;
+  const {
+    tag: { label, backgroundColor, foregroundColor, margin, position },
+  } = setting;
   const root = document.createElement("div");
   root.id = "app-env-tag-crx-root";
   document.body.appendChild(root);
 
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
-      <Tag
-        label={label}
-        backgroundColor={backgroundColor}
-        foregroundColor={foregroundColor}
-        margin={margin}
-      ></Tag>
+      <RenderTagFrame position={position}>
+        <Tag
+          label={label}
+          backgroundColor={backgroundColor}
+          foregroundColor={foregroundColor}
+          margin={margin}
+        ></Tag>
+      </RenderTagFrame>
     </React.StrictMode>
   );
 }
@@ -36,8 +41,8 @@ async function bootstrap() {
     return;
   }
 
-  if (!setting.enable) {
-    console.log("Skip cause enable is false");
+  if (!setting.enabled) {
+    console.log("Skip cause enabled is false");
     return;
   }
 

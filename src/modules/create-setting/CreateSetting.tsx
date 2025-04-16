@@ -18,7 +18,7 @@ export default function CreateSetting({
     loader.startLoading();
     try {
       await save(domain, {
-        enable: true,
+        enabled: true,
         tag: DEFAULT_TAG,
       });
       onSettingCreated();

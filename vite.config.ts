@@ -7,7 +7,16 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [tailwindcss(), react(), crx({ manifest })],
+  plugins: [
+    tailwindcss(),
+    react({
+      jsxImportSource: "@emotion/react",
+      babel: {
+        plugins: ["@emotion/babel-plugin"],
+      },
+    }),
+    crx({ manifest }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
