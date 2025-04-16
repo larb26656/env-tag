@@ -4,11 +4,17 @@
   "version": "1.0",
   "manifest_version": 3,
   "action": {
-    "default_popup": "index.html"
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
       "js": ["src/scripts/content.jsx"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["newtab.html"],
       "matches": ["<all_urls>"]
     }
   ],

@@ -10,3 +10,8 @@ export function extractDomain(url: string): string {
     throw new Error("Invalid URL");
   }
 }
+
+export function openNewTab(url: string): void {
+  const chromeUrl = chrome.runtime.getURL(`newtab.html#/${url}`);
+  chrome.tabs.create({ url: chromeUrl });
+}

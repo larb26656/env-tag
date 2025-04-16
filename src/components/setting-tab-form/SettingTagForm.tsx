@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Trash2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import Tag from "@/components/tag/Tag";
-import {
-  deleteByDomain,
-  Position,
-  save,
-  SiteSetting,
-} from "@/services/setting.service";
+import { Position, save, SiteSetting } from "@/services/setting.service";
 import { useLoader } from "@/providers/loader.provider";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -29,15 +23,6 @@ import RenderTagFrame from "@/components/tag/RenderTagFrame";
 interface SettingFormProps {
   domain: string;
   setting: SiteSetting;
-  onRefreshSetting: () => void;
-}
-
-interface SettingForm {
-  label: string;
-  backgroundColor: string;
-  foregroundColor: string;
-  margin: number;
-  position: Position;
 }
 
 const formSchema = z.object({
@@ -51,11 +36,7 @@ const formSchema = z.object({
 
 type FromSchema = z.infer<typeof formSchema>;
 
-export default function SettingForm({
-  domain,
-  setting,
-  onRefreshSetting,
-}: SettingFormProps) {
+export default function SettingTagForm({ domain, setting }: SettingFormProps) {
   const {
     enabled,
     tag: { label, backgroundColor, foregroundColor, margin, position },
@@ -99,19 +80,6 @@ export default function SettingForm({
       });
     } catch (err) {
       toast("Failed to save setting");
-      console.error(err);
-    } finally {
-      loader.stopLoading();
-    }
-  }
-
-  async function handleDelete() {
-    loader.startLoading();
-    try {
-      await deleteByDomain(domain);
-      onRefreshSetting();
-    } catch (err) {
-      toast("Failed to delete setting");
       console.error(err);
     } finally {
       loader.stopLoading();
@@ -304,10 +272,6 @@ export default function SettingForm({
   function Footer() {
     return (
       <div className="flex justify-center gap-2">
-        <Button variant="destructive" size="sm" onClick={handleDelete}>
-          <Trash2 className="h-4 w-4 mr-1" />
-          Delete
-        </Button>
         <Button type="submit" size="sm">
           Save
         </Button>
