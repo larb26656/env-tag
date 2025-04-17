@@ -12,16 +12,17 @@ import DomainNavBar from "@/components/navigator/DomainNavBar";
 import { Home, Trash } from "lucide-react";
 import { useLoader } from "@/providers/loader.provider";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
 
 export default function HomePage() {
+  const loader = useLoader();
   const [domain, setDomain] = useState<string | null>(null);
   const [currentSetting, setCurrentSetting] = useState<SiteSetting | null>(
     null
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const loader = useLoader();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false);
 
   useEffect(() => {
     fetchInitData();
@@ -55,10 +56,14 @@ export default function HomePage() {
     openNewTab("home");
   }
 
-  async function handleDelete(domain: string) {
+  async function handleDelete() {
+    setConfirmDeleteOpen(true);
+  }
+
+  async function handleConfirmDelete() {
     loader.startLoading();
     try {
-      await deleteByDomain(domain);
+      domain && (await deleteByDomain(domain));
       fetchInitData();
     } catch (err) {
       toast("Failed to delete setting");
@@ -66,6 +71,25 @@ export default function HomePage() {
     } finally {
       loader.stopLoading();
     }
+  }
+
+  function ConfirmDeleteDialog() {
+    return (
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        description={"Are you sure to delete?"}
+        onConfirm={handleConfirmDelete}
+      />
+    );
+  }
+
+  function DialogRegistry() {
+    return (
+      <>
+        <ConfirmDeleteDialog />
+      </>
+    );
   }
 
   let content: React.ReactNode = null;
@@ -85,33 +109,36 @@ export default function HomePage() {
   }
 
   return (
-    <div className="flex flex-col min-w-[300px] min-h-[500px]">
-      <DomainNavBar
-        domain={domain ?? "-"}
-        menuItems={
-          currentSetting
-            ? [
-                {
-                  icon: Home,
-                  label: "Home",
-                  onClick: handleHome,
-                },
-                {
-                  icon: Trash,
-                  label: "Delete",
-                  onClick: () => handleDelete(domain!),
-                },
-              ]
-            : [
-                {
-                  icon: Home,
-                  label: "Home",
-                  onClick: handleHome,
-                },
-              ]
-        }
-      />
-      <div className="p-5">{content}</div>
-    </div>
+    <>
+      <DialogRegistry />
+      <div className="flex flex-col min-w-[350px] min-h-[500px]">
+        <DomainNavBar
+          domain={domain ?? "-"}
+          menuItems={
+            currentSetting
+              ? [
+                  {
+                    icon: Home,
+                    label: "Home",
+                    onClick: handleHome,
+                  },
+                  {
+                    icon: Trash,
+                    label: "Delete",
+                    onClick: () => handleDelete(),
+                  },
+                ]
+              : [
+                  {
+                    icon: Home,
+                    label: "Home",
+                    onClick: handleHome,
+                  },
+                ]
+          }
+        />
+        <div className="p-5">{content}</div>
+      </div>
+    </>
   );
 }

@@ -1,15 +1,49 @@
 import { useEffect, useState } from "react";
 import DomainList, { DomainData } from "./DomainList";
-import { get, Setting } from "@/services/setting.service";
+import { deleteByDomain, get, Setting } from "@/services/setting.service";
+import { useLoader } from "@/providers/loader.provider";
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
 
 export default function HomePage() {
+  const loader = useLoader();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dataList, setDataList] = useState<DomainData[]>([]);
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [confirmEditOpen, setConfirmEditOpen] = useState<boolean>(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false);
 
   useEffect(() => {
     fetchInitData();
   }, []);
+
+  async function handleEdit(domain: string) {
+    setSelectedDomain(domain);
+    setConfirmEditOpen(true);
+  }
+
+  async function handleConfirmEdit(domain: string) {
+    toast("Edit not support yet!");
+  }
+
+  async function handleDelete(domain: string) {
+    setSelectedDomain(domain);
+    setConfirmDeleteOpen(true);
+  }
+
+  async function handleConfirmDelete(domain: string) {
+    loader.startLoading();
+    try {
+      await deleteByDomain(domain);
+      fetchInitData();
+    } catch (err) {
+      toast("Failed to delete setting");
+      console.error(err);
+    } finally {
+      loader.stopLoading();
+    }
+  }
 
   async function fetchInitData() {
     setLoading(true);
@@ -26,21 +60,52 @@ export default function HomePage() {
     }
   }
 
+  function ConfirmEditDialog() {
+    return (
+      <ConfirmDialog
+        open={confirmEditOpen}
+        onOpenChange={setConfirmEditOpen}
+        description={"Are you sure to edit?"}
+        onConfirm={() => selectedDomain && handleConfirmEdit(selectedDomain)}
+      />
+    );
+  }
+
+  function ConfirmDeleteDialog() {
+    return (
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        description={"Are you sure to delete?"}
+        onConfirm={() => selectedDomain && handleConfirmDelete(selectedDomain)}
+      />
+    );
+  }
+
+  function DialogRegistry() {
+    return (
+      <>
+        <ConfirmEditDialog />
+        <ConfirmDeleteDialog />
+      </>
+    );
+  }
+
   if (loading) {
     return <div>Loading...</div>;
   } else if (error) {
     return <div>Error: {error}</div>;
   }
+
   return (
-    <DomainList
-      dataList={dataList}
-      onEditClick={function (domain: string): void {
-        throw new Error("Function not implemented.");
-      }}
-      onDeleteClick={function (domain: string): void {
-        throw new Error("Function not implemented.");
-      }}
-    />
+    <>
+      <DialogRegistry />
+      <DomainList
+        dataList={dataList}
+        onEditClick={handleEdit}
+        onDeleteClick={handleDelete}
+      />
+    </>
   );
 }
 
