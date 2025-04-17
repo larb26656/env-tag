@@ -7,6 +7,13 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        newtab: "newtab.html",
+      },
+    },
+  },
   plugins: [
     tailwindcss(),
     react({
