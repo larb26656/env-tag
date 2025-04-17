@@ -1,11 +1,11 @@
 import HomePage from "./home/HomePage";
 import MainLayout from "./layout/MainLayout";
 import "./App.css";
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
+import { createHashRouter, Navigate, RouterProvider } from "react-router";
 import LoaderProvider from "@/providers/loader.provider";
 import { Toaster } from "sonner";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     Component: MainLayout,

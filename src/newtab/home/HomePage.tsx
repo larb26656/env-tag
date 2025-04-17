@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import DomainList, { DomainData } from "./DomainList";
-import { deleteByDomain, get, Setting } from "@/services/setting.service";
+import {
+  deleteByDomain,
+  get,
+  getByDomain,
+  Setting,
+  SiteSetting,
+} from "@/services/setting.service";
 import { useLoader } from "@/providers/loader.provider";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import SettingTagDialogForm from "@/components/setting-tag-form/SettingTagDialogForm";
 
 export default function HomePage() {
   const loader = useLoader();
@@ -14,6 +20,8 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [dataList, setDataList] = useState<DomainData[]>([]);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [selectedSiteSetting, setSelectedSiteSetting] =
+    useState<SiteSetting | null>(null);
   const [confirmEditOpen, setConfirmEditOpen] = useState<boolean>(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState<boolean>(false);
   const [searchFilter, setSearchFilter] = useState<string>("");
@@ -27,6 +35,10 @@ export default function HomePage() {
     fetchInitData();
   }, []);
 
+  useEffect(() => {
+    console.log("dialog change!");
+  }, [confirmEditOpen]);
+
   function filterData() {
     return dataList.filter((item) =>
       Object.values(item).some(
@@ -37,17 +49,24 @@ export default function HomePage() {
     );
   }
 
-  async function handleAdd() {
-    toast("Handle add");
-  }
-
   async function handleEdit(domain: string) {
     setSelectedDomain(domain);
-    setConfirmEditOpen(true);
-  }
 
-  async function handleConfirmEdit(domain: string) {
-    toast("Edit not support yet!");
+    try {
+      const currentSetting = await getByDomain(domain);
+      if (!currentSetting) {
+        throw new Error("Current setting not found");
+      }
+
+      setSelectedSiteSetting(currentSetting);
+      setConfirmEditOpen(true);
+    } catch (err) {
+      setError("Failed to get current tab");
+      setConfirmEditOpen(false);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleDelete(domain: string) {
@@ -83,56 +102,37 @@ export default function HomePage() {
     }
   }
 
-  if (loading) {
-    return <div>Loading...</div>;
-  } else if (error) {
-    return <div>Error: {error}</div>;
-  }
-
   return (
     <>
-      <DialogRegistry
-        confirmEditOpen={confirmEditOpen}
-        setConfirmEditOpen={setConfirmEditOpen}
-        confirmDeleteOpen={confirmDeleteOpen}
-        setConfirmDeleteOpen={setConfirmDeleteOpen}
-        selectedDomain={selectedDomain}
-        onConfirmEdit={handleConfirmEdit}
-        onConfirmDelete={handleConfirmDelete}
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={() => selectedDomain && handleConfirmDelete(selectedDomain)}
       />
+      <SettingTagDialogForm
+        open={confirmEditOpen}
+        onOpenChange={setConfirmEditOpen}
+        domain={selectedDomain}
+        setting={selectedSiteSetting}
+        onSaveSetting={fetchInitData}
+      ></SettingTagDialogForm>
 
       <div className="flex flex-col w-full gap-2">
-        <SearchInput
-          searchFilter={searchFilter}
-          onChange={setSearchFilter}
-          onAddClick={handleAdd}
-        />
-        <DomainList
-          dataList={filteredDataList}
-          onEditClick={handleEdit}
-          onDeleteClick={handleDelete}
-        />
+        <SearchInput searchFilter={searchFilter} onChange={setSearchFilter} />
+
+        <>
+          {loading && <div>Loading...</div>}
+          {error && <div>Error: {error}</div>}
+          {!loading && !error && (
+            <DomainList
+              dataList={filteredDataList}
+              onEditClick={handleEdit}
+              onDeleteClick={handleDelete}
+            />
+          )}
+        </>
       </div>
     </>
-  );
-}
-
-function ConfirmEditDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <ConfirmDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      description={"Are you sure to edit?"}
-      onConfirm={onConfirm}
-    />
   );
 }
 
@@ -155,47 +155,12 @@ function ConfirmDeleteDialog({
   );
 }
 
-function DialogRegistry({
-  confirmEditOpen,
-  setConfirmEditOpen,
-  confirmDeleteOpen,
-  setConfirmDeleteOpen,
-  selectedDomain,
-  onConfirmEdit,
-  onConfirmDelete,
-}: {
-  confirmEditOpen: boolean;
-  setConfirmEditOpen: (v: boolean) => void;
-  confirmDeleteOpen: boolean;
-  setConfirmDeleteOpen: (v: boolean) => void;
-  selectedDomain: string | null;
-  onConfirmEdit: (domain: string) => void;
-  onConfirmDelete: (domain: string) => void;
-}) {
-  return (
-    <>
-      <ConfirmEditDialog
-        open={confirmEditOpen}
-        onOpenChange={setConfirmEditOpen}
-        onConfirm={() => selectedDomain && onConfirmEdit(selectedDomain)}
-      />
-      <ConfirmDeleteDialog
-        open={confirmDeleteOpen}
-        onOpenChange={setConfirmDeleteOpen}
-        onConfirm={() => selectedDomain && onConfirmDelete(selectedDomain)}
-      />
-    </>
-  );
-}
-
 function SearchInput({
   searchFilter,
   onChange,
-  onAddClick,
 }: {
   searchFilter: string;
   onChange: (value: string) => void;
-  onAddClick: () => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
@@ -209,9 +174,6 @@ function SearchInput({
           onChange={(e) => onChange(e.target.value)}
         />
       </div>
-      <Button onClick={onAddClick} className="w-full sm:w-auto">
-        <Plus className="mr-2 h-4 w-4" /> Add New
-      </Button>
     </div>
   );
 }

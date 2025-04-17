@@ -21,21 +21,68 @@ import { z } from "zod";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import RenderTagFrame from "@/components/tag/RenderTagFrame";
 
-interface SettingFormProps {
-  domain: string;
-  setting: SiteSetting;
+export default function SettingTagForm({
+  domain,
+  setting,
+  onSaveSetting,
+}: SettingFormProps) {
+  const {
+    enabled,
+    tag: { label, backgroundColor, foregroundColor, margin, position },
+  } = setting;
+
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      enabled,
+      label,
+      backgroundColor,
+      foregroundColor,
+      margin,
+      position,
+    },
+  });
+
+  const loader = useLoader();
+
+  async function handleSubmit(data: FormSchema) {
+    loader.startLoading();
+    try {
+      await save(domain, {
+        enabled: data.enabled,
+        tag: {
+          label: data.label,
+          backgroundColor: data.backgroundColor,
+          foregroundColor: data.foregroundColor,
+          margin: data.margin,
+          position: data.position,
+        },
+      });
+
+      onSaveSetting && onSaveSetting();
+    } catch (err) {
+      toast("Failed to save setting");
+      console.error(err);
+    } finally {
+      loader.stopLoading();
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <EnabledField control={form.control} />
+        <LabelField control={form.control} />
+        <BackgroundColorField control={form.control} />
+        <ForegroundColorField control={form.control} />
+        <MarginField control={form.control} />
+        <DisplayPreview control={form.control} />
+        <PositionField control={form.control} />
+        <Footer />
+      </form>
+    </Form>
+  );
 }
-
-const formSchema = z.object({
-  enabled: z.boolean(),
-  label: z.string().nonempty(),
-  backgroundColor: z.string().nonempty(),
-  foregroundColor: z.string().nonempty(),
-  margin: z.number(),
-  position: z.nativeEnum(Position),
-});
-
-type FormSchema = z.infer<typeof formSchema>;
 
 function EnabledField({ control }: { control: Control<FormSchema> }) {
   return (
@@ -219,59 +266,19 @@ function Footer() {
   );
 }
 
-export default function SettingTagForm({ domain, setting }: SettingFormProps) {
-  const {
-    enabled,
-    tag: { label, backgroundColor, foregroundColor, margin, position },
-  } = setting;
-
-  const form = useForm<FormSchema>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      enabled,
-      label,
-      backgroundColor,
-      foregroundColor,
-      margin,
-      position,
-    },
-  });
-
-  const loader = useLoader();
-
-  async function handleSubmit(data: FormSchema) {
-    loader.startLoading();
-    try {
-      await save(domain, {
-        enabled: data.enabled,
-        tag: {
-          label: data.label,
-          backgroundColor: data.backgroundColor,
-          foregroundColor: data.foregroundColor,
-          margin: data.margin,
-          position: data.position,
-        },
-      });
-    } catch (err) {
-      toast("Failed to save setting");
-      console.error(err);
-    } finally {
-      loader.stopLoading();
-    }
-  }
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        <EnabledField control={form.control} />
-        <LabelField control={form.control} />
-        <BackgroundColorField control={form.control} />
-        <ForegroundColorField control={form.control} />
-        <MarginField control={form.control} />
-        <DisplayPreview control={form.control} />
-        <PositionField control={form.control} />
-        <Footer />
-      </form>
-    </Form>
-  );
+interface SettingFormProps {
+  domain: string;
+  setting: SiteSetting;
+  onSaveSetting?: () => void;
 }
+
+const formSchema = z.object({
+  enabled: z.boolean(),
+  label: z.string().nonempty(),
+  backgroundColor: z.string().nonempty(),
+  foregroundColor: z.string().nonempty(),
+  margin: z.number(),
+  position: z.nativeEnum(Position),
+});
+
+type FormSchema = z.infer<typeof formSchema>;

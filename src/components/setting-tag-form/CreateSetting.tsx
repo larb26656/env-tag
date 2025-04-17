@@ -5,12 +5,12 @@ import { toast } from "sonner";
 
 interface CreateSettingProps {
   domain: string;
-  onRefreshSetting: () => void;
+  onSettingCreated: () => void;
 }
 
 export default function CreateSetting({
   domain,
-  onRefreshSetting: onSettingCreated,
+  onSettingCreated,
 }: CreateSettingProps) {
   const loader = useLoader();
 

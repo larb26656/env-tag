@@ -6,8 +6,8 @@ import {
 import { getCurrentTab } from "@/services/tab.service";
 import { extractDomain, openNewTab } from "@/utils/url.utils";
 import { useEffect, useState } from "react";
-import CreateSetting from "@/components/setting-tab-form/CreateSetting";
-import SettingTagForm from "@/components/setting-tab-form/SettingTagForm";
+import CreateSetting from "@/components/setting-tag-form/CreateSetting";
+import SettingTagForm from "@/components/setting-tag-form/SettingTagForm";
 import DomainNavBar from "@/components/navigator/DomainNavBar";
 import { Home, Trash } from "lucide-react";
 import { useLoader } from "@/providers/loader.provider";
@@ -53,7 +53,7 @@ export default function HomePage() {
   }
 
   function handleHome() {
-    openNewTab("home");
+    openNewTab("");
   }
 
   async function handleDelete() {
@@ -90,18 +90,18 @@ export default function HomePage() {
     content = <SettingTagForm domain={domain} setting={currentSetting} />;
   } else {
     content = (
-      <CreateSetting domain={domain} onRefreshSetting={fetchInitData} />
+      <CreateSetting domain={domain} onSettingCreated={fetchInitData} />
     );
   }
 
   return (
     <>
-      <DialogRegistry
-        confirmDeleteOpen={confirmDeleteOpen}
-        setConfirmDeleteOpen={setConfirmDeleteOpen}
-        onConfirmDelete={handleConfirmDelete}
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleConfirmDelete}
       />
-      <div className="flex flex-col min-w-[350px] min-h-[500px]">
+      <div className="flex flex-col">
         <DomainNavBar
           domain={domain ?? "-"}
           menuItems={
@@ -149,25 +149,5 @@ function ConfirmDeleteDialog({
       description={"Are you sure to delete?"}
       onConfirm={onConfirm}
     />
-  );
-}
-
-function DialogRegistry({
-  confirmDeleteOpen,
-  setConfirmDeleteOpen,
-  onConfirmDelete,
-}: {
-  confirmDeleteOpen: boolean;
-  setConfirmDeleteOpen: (open: boolean) => void;
-  onConfirmDelete: () => void;
-}) {
-  return (
-    <>
-      <ConfirmDeleteDialog
-        open={confirmDeleteOpen}
-        onOpenChange={setConfirmDeleteOpen}
-        onConfirm={onConfirmDelete}
-      />
-    </>
   );
 }
