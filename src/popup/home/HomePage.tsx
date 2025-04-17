@@ -61,9 +61,14 @@ export default function HomePage() {
   }
 
   async function handleConfirmDelete() {
+    if (!domain) {
+      toast("No domain to delete");
+      return;
+    }
+
     loader.startLoading();
     try {
-      domain && (await deleteByDomain(domain));
+      await deleteByDomain(domain);
       fetchInitData();
     } catch (err) {
       toast("Failed to delete setting");
