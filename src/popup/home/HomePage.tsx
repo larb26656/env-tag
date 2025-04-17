@@ -78,25 +78,6 @@ export default function HomePage() {
     }
   }
 
-  function ConfirmDeleteDialog() {
-    return (
-      <ConfirmDialog
-        open={confirmDeleteOpen}
-        onOpenChange={setConfirmDeleteOpen}
-        description={"Are you sure to delete?"}
-        onConfirm={handleConfirmDelete}
-      />
-    );
-  }
-
-  function DialogRegistry() {
-    return (
-      <>
-        <ConfirmDeleteDialog />
-      </>
-    );
-  }
-
   let content: React.ReactNode = null;
 
   if (loading) {
@@ -115,7 +96,11 @@ export default function HomePage() {
 
   return (
     <>
-      <DialogRegistry />
+      <DialogRegistry
+        confirmDeleteOpen={confirmDeleteOpen}
+        setConfirmDeleteOpen={setConfirmDeleteOpen}
+        onConfirmDelete={handleConfirmDelete}
+      />
       <div className="flex flex-col min-w-[350px] min-h-[500px]">
         <DomainNavBar
           domain={domain ?? "-"}
@@ -144,6 +129,45 @@ export default function HomePage() {
         />
         <div className="p-5">{content}</div>
       </div>
+    </>
+  );
+}
+
+function ConfirmDeleteDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      description={"Are you sure to delete?"}
+      onConfirm={onConfirm}
+    />
+  );
+}
+
+function DialogRegistry({
+  confirmDeleteOpen,
+  setConfirmDeleteOpen,
+  onConfirmDelete,
+}: {
+  confirmDeleteOpen: boolean;
+  setConfirmDeleteOpen: (open: boolean) => void;
+  onConfirmDelete: () => void;
+}) {
+  return (
+    <>
+      <ConfirmDeleteDialog
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={onConfirmDelete}
+      />
     </>
   );
 }
